@@ -1,53 +1,68 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:firedart/firedart.dart';
+import 'package:flutter/material.dart';
+import 'package:project_desktop/homepage.dart';
 
 const apiKey = 'AIzaSyB-kvN9Ldpzmk343X0h95tD9yxzrC9Lelg';
 const projectId = 'restaurantapp-2a43d';
 
 void main() {
   Firestore.initialize(projectId);
-  runApp(const FireStoreApp());
+  runApp(const WaiterApp());
 }
 
-class FireStoreApp extends StatelessWidget {
-  const FireStoreApp({Key? key}) : super(key: key);
+class WaiterApp extends StatelessWidget {
+  const WaiterApp({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return const FluentApp(
-      title: 'Cloud Firestore Windows',
-      home: FireStoreHome(),
+    return FluentApp(
+      title: 'Restaurant Name',
+      home: LoginRestaurant(),
     );
   }
 }
 
-class FireStoreHome extends StatefulWidget {
-  const FireStoreHome({Key? key}) : super(key: key);
+class LoginRestaurant extends StatefulWidget {
+  const LoginRestaurant({Key? key}) : super(key: key);
 
   @override
-  _FireStoreHomeState createState() => _FireStoreHomeState();
+  _LoginRestaurantState createState() => _LoginRestaurantState();
 }
 
-class _FireStoreHomeState extends State<FireStoreHome> {
-  CollectionReference collection = Firestore.instance.collection("users");
+class _LoginRestaurantState extends State<LoginRestaurant> {
+  CollectionReference collection = Firestore.instance.collection("Restaurants");
+  TextEditingController restaurantID = TextEditingController();
+
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.blue,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Button(
-              child: const Text('List Groceries'),
-              onPressed: () async {
-                final users = await collection.get();
-
-                print(users);
-              },
-            ),
-          ],
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 200,
+          child: TextBox(
+            header: 'Enter Restaurant ID',
+            placeholder: 'id',
+            expands: false,
+            controller: restaurantID,
+          ),
         ),
-      ),
+        Button(
+          child: const Text('Login'),
+          onPressed: () async {
+            final restaurant = await collection.document(restaurantID.text).get();
+
+            if(restaurant!=null){
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Navigation(restaurantId: restaurant.id.toString(),)),
+              );
+            }
+
+          },
+        ),
+      ],
     );
   }
 }
