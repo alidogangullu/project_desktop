@@ -1,70 +1,52 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:project_desktop/firebase_options.dart';
+import 'package:fluent_ui/fluent_ui.dart';
+import 'package:firedart/firedart.dart';
 
-Future<void> main() async {
-  await Firebase.initializeApp(options: firebaseOptions);
-  runApp(const MyApp());
+const apiKey = 'AIzaSyB-kvN9Ldpzmk343X0h95tD9yxzrC9Lelg';
+const projectId = 'restaurantapp-2a43d';
+
+void main() {
+  Firestore.initialize(projectId);
+  runApp(const FireStoreApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+class FireStoreApp extends StatelessWidget {
+  const FireStoreApp({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    return const FluentApp(
+      title: 'Cloud Firestore Windows',
+      home: FireStoreHome(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+class FireStoreHome extends StatefulWidget {
+  const FireStoreHome({Key? key}) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _FireStoreHomeState createState() => _FireStoreHomeState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
+class _FireStoreHomeState extends State<FireStoreHome> {
+  CollectionReference collection = Firestore.instance.collection("users");
   @override
   Widget build(BuildContext context) {
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
+    return Container(
+      color: Colors.blue,
+      child: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Button(
+              child: const Text('List Groceries'),
+              onPressed: () async {
+                final users = await collection.get();
+
+                print(users);
+              },
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
