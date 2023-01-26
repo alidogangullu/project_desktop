@@ -30,9 +30,9 @@ class LoginRestaurant extends StatefulWidget {
 }
 
 class _LoginRestaurantState extends State<LoginRestaurant> {
+
   CollectionReference collection = Firestore.instance.collection("Restaurants");
   TextEditingController restaurantID = TextEditingController();
-
 
   @override
   Widget build(BuildContext context) {
@@ -56,10 +56,9 @@ class _LoginRestaurantState extends State<LoginRestaurant> {
             if(restaurant!=null){
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Navigation(restaurantId: restaurant.id.toString(),)),
+                MaterialPageRoute(builder: (context) => Navigation(restaurantId: restaurant.id)),
               );
             }
-
           },
         ),
       ],

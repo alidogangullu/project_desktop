@@ -12,15 +12,15 @@ class Navigation extends StatelessWidget {
     return FluentApp(
       home: NavigationView(
         appBar: NavigationAppBar(
-          title: Text(restaurantId),
+          title: Text("Restaurant"),
         ),
         pane: NavigationPane(displayMode: PaneDisplayMode.compact, items: [
           PaneItem(
               icon: const Icon(FluentIcons.home),
               title: const Text("Home"),
               body: Home(
-                title: restaurantId,
-              )),
+                restaurantID: restaurantId,
+              ),),
         ]),
       ),
     );
@@ -28,8 +28,8 @@ class Navigation extends StatelessWidget {
 }
 
 class Home extends StatefulWidget {
-  const Home({Key? key, required this.title}) : super(key: key);
-  final String title;
+  const Home({Key? key, required this.restaurantID}) : super(key: key);
+  final String restaurantID;
 
   @override
   State<Home> createState() => _HomeState();
@@ -43,7 +43,7 @@ class _HomeState extends State<Home> {
 
     super.initState();
 
-    final ref = Firestore.instance.collection("/Restaurants/${widget.title}/Tables");
+    final ref = Firestore.instance.collection("/Restaurants/${widget.restaurantID}/Tables");
     ref.stream.listen((document) {
       setState(() {
       });
@@ -56,7 +56,7 @@ class _HomeState extends State<Home> {
       padding: const EdgeInsets.all(8.0),
       child: StreamBuilder(
         stream: Firestore.instance
-            .collection("/Restaurants/${widget.title}/Tables")
+            .collection("/Restaurants/${widget.restaurantID}/Tables")
             .get()
             .asStream(),
         builder: (context, snapshot) {
