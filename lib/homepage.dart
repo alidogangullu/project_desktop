@@ -12,7 +12,7 @@ class Navigation extends StatelessWidget {
     return FluentApp(
       home: NavigationView(
         appBar: NavigationAppBar(
-          title: Text("Restaurant"),
+          title: Text("Restaurant"), //todo girilen restoranta özel değişen başlık
         ),
         pane: NavigationPane(displayMode: PaneDisplayMode.compact, items: [
           PaneItem(
@@ -21,6 +21,7 @@ class Navigation extends StatelessWidget {
               body: Home(
                 restaurantID: restaurantId,
               ),),
+          //todo yeni sekmeler vb.
         ]),
       ),
     );
@@ -44,6 +45,8 @@ class _HomeState extends State<Home> {
     super.initState();
 
     final ref = Firestore.instance.collection("/Restaurants/${widget.restaurantID}/Tables");
+
+    //databasede değişiklik olduğunda ekranı güncellemek için
     ref.stream.listen((document) {
       setState(() {
       });
@@ -73,6 +76,8 @@ class _HomeState extends State<Home> {
               primary: false,
               shrinkWrap: true,
               children: snapshot.data!.map((document) {
+                //masa listeleme
+                //todo masa için sipariş listesi, hesap, süre vb özellikler
                 return Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[50]),

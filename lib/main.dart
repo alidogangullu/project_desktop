@@ -3,6 +3,7 @@ import 'package:firedart/firedart.dart';
 import 'package:flutter/material.dart';
 import 'package:project_desktop/homepage.dart';
 
+//firebase database bağlantısı için
 const apiKey = 'AIzaSyB-kvN9Ldpzmk343X0h95tD9yxzrC9Lelg';
 const projectId = 'restaurantapp-2a43d';
 
@@ -51,6 +52,10 @@ class _LoginRestaurantState extends State<LoginRestaurant> {
         Button(
           child: const Text('Login'),
           onPressed: () async {
+
+            //girilen restaurant id (şuan için sadece restorant id ile erişiliyor) ile eşleşen restorantın bilgilerini çeken buton
+            //todo güvenlik (şifre vb.), kişisel garson girişi
+
             final restaurant = await collection.document(restaurantID.text).get();
 
             if(restaurant!=null){
