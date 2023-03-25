@@ -1,6 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:firedart/firedart.dart';
-import 'package:flutter/material.dart';
 import 'package:project_desktop/homepage.dart';
 
 //firebase database bağlantısı için
@@ -61,7 +60,7 @@ class _LoginRestaurantState extends State<LoginRestaurant> {
             if(restaurant!=null){
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Navigation(restaurantId: restaurant.id)),
+                FluentPageRoute(builder: (context) => Navigation(restaurantId: restaurant.id),),
               );
             }
           },

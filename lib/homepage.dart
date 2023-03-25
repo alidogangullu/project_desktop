@@ -1,6 +1,6 @@
 import 'package:firedart/firedart.dart';
-import 'package:firedart/firestore/firestore.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:project_desktop/table_page.dart';
 
 class Navigation extends StatelessWidget {
   const Navigation({Key? key, required this.restaurantId}) : super(key: key);
@@ -11,17 +11,20 @@ class Navigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return FluentApp(
       home: NavigationView(
-        appBar: NavigationAppBar(
-          title: Text("Restaurant"), //todo girilen restoranta özel değişen başlık
+        appBar: const NavigationAppBar(
+          leading: Text(""),
+          title:
+              Text("Restaurant"), //todo girilen restoranta özel değişen başlık
         ),
         pane: NavigationPane(displayMode: PaneDisplayMode.compact, items: [
           PaneItem(
-              icon: const Icon(FluentIcons.home),
-              title: const Text("Home"),
-              body: Home(
-                restaurantID: restaurantId,
-              ),),
-          //todo yeni sekmeler vb.
+            icon: const Icon(FluentIcons.home),
+            title: const Text("Home"),
+            body: Home(
+              restaurantID: restaurantId,
+            ),
+          ),
+          //todo yeni sekmeler
         ]),
       ),
     );
@@ -37,20 +40,48 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-
   bool isFirstLoading = true;
 
-  void initState() {
-
-    super.initState();
-
-    final ref = Firestore.instance.collection("/Restaurants/${widget.restaurantID}/Tables");
+  void listenRestaurantData() {
+    final ref = Firestore.instance
+        .collection("/Restaurants/${widget.restaurantID}/Tables");
 
     //databasede değişiklik olduğunda ekranı güncellemek için
     ref.stream.listen((document) {
-      setState(() {
-      });
+      setState(() {});
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    listenRestaurantData();
+  }
+
+  void showNotifications(BuildContext context, int number, Document document) async {
+    await showDialog<String>(
+      context: context,
+      builder: (context) => ContentDialog(
+        title: Text('Table $number'),
+        content: const Notifications(),
+        actions: [
+          Button(
+            child: const Text('Cancel'),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          FilledButton(
+              child: const Text('Okey'),
+              onPressed: () async {
+                await document.reference.update({'newNotification' : false});
+                Navigator.pop(context);
+              }
+          ),
+        ],
+      ),
+    );
+    setState(() {});
   }
 
   @override
@@ -84,11 +115,20 @@ class _HomeState extends State<Home> {
                     borderRadius: const BorderRadius.all(Radius.circular(10)),
                   ),
                   child: ListTile(
-                    title: Text("Table ${document['number']}"),
+                    title: Center(child: Text("Table ${document['number']}")),
                     onPressed: () {
-                      var value = document["OrderList"];
-                      print("OrderList from firebase: $value");
+                      Navigator.push(
+                        context,
+                        FluentPageRoute(builder: (context) => TableManagementPage(tableNo: document['number']),),
+                      );
                     },
+                    subtitle: Center(
+                      child: IconButton(
+                        icon: Icon(document['newNotification'] ? FluentIcons.ringer_active : FluentIcons.ringer),
+                        onPressed: () {
+                          showNotifications(context, document['number'], document);
+                        },
+                      ),),
                   ),
                 );
               }).toList(),
@@ -97,5 +137,14 @@ class _HomeState extends State<Home> {
         },
       ),
     );
+  }
+}
+
+class Notifications extends StatelessWidget {
+  const Notifications({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text("new order, garson çağırma, hesap isteme, login isteği vb. bildirimler");
   }
 }
