@@ -58,7 +58,8 @@ class _HomeState extends State<Home> {
     listenRestaurantData();
   }
 
-  void showNotifications(BuildContext context, int number, Document document) async {
+  void showNotifications(
+      BuildContext context, int number, Document document) async {
     await showDialog<String>(
       context: context,
       builder: (context) => ContentDialog(
@@ -74,10 +75,9 @@ class _HomeState extends State<Home> {
           FilledButton(
               child: const Text('Okey'),
               onPressed: () async {
-                await document.reference.update({'newNotification' : false});
+                await document.reference.update({'newNotification': false});
                 Navigator.pop(context);
-              }
-          ),
+              }),
         ],
       ),
     );
@@ -94,7 +94,8 @@ class _HomeState extends State<Home> {
             .get()
             .asStream(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting && isFirstLoading) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              isFirstLoading) {
             isFirstLoading = false;
             return const Center(child: ProgressRing());
           } else {
@@ -108,7 +109,7 @@ class _HomeState extends State<Home> {
               shrinkWrap: true,
               children: snapshot.data!.map((document) {
                 //masa listeleme
-                //todo masa için sipariş listesi, hesap, süre vb özellikler
+                //todo hesap, süre vb özellikler
                 return Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[50]),
@@ -119,16 +120,25 @@ class _HomeState extends State<Home> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        FluentPageRoute(builder: (context) => TableManagementPage(tableNo: document['number']),),
+                        FluentPageRoute(
+                          builder: (context) => TableManagementPage(
+                            tableNo: document['number'],
+                            ordersRef: "/Restaurants/${widget.restaurantID}/Tables/${document['number']}/Orders",
+                          ),
+                        ),
                       );
                     },
                     subtitle: Center(
                       child: IconButton(
-                        icon: Icon(document['newNotification'] ? FluentIcons.ringer_active : FluentIcons.ringer),
+                        icon: Icon(document['newNotification']
+                            ? FluentIcons.ringer_active
+                            : FluentIcons.ringer),
                         onPressed: () {
-                          showNotifications(context, document['number'], document);
+                          showNotifications(
+                              context, document['number'], document);
                         },
-                      ),),
+                      ),
+                    ),
                   ),
                 );
               }).toList(),
@@ -145,6 +155,7 @@ class Notifications extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text("new order, garson çağırma, hesap isteme, login isteği vb. bildirimler");
+    return const Text(
+        "new order, garson çağırma, hesap isteme, login isteği vb. bildirimler");
   }
 }
