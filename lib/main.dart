@@ -15,8 +15,7 @@ class WaiterApp extends StatelessWidget {
   const WaiterApp({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return FluentApp(
-      title: 'Restaurant Name',
+    return const FluentApp(
       home: LoginRestaurant(),
     );
   }
@@ -39,7 +38,7 @@ class _LoginRestaurantState extends State<LoginRestaurant> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Container(
+        SizedBox(
           width: 200,
           child: TextBox(
             header: 'Enter Restaurant ID',

@@ -11,10 +11,11 @@ class Navigation extends StatelessWidget {
   Widget build(BuildContext context) {
     return FluentApp(
       home: NavigationView(
-        appBar: const NavigationAppBar(
-          leading: Text(""),
-          title:
-              Text("Restaurant"), //todo girilen restoranta özel değişen başlık
+        appBar: NavigationAppBar(
+          leading: const SizedBox(),
+          title: RestaurantNameText(
+            restaurantId: restaurantId,
+          ),
         ),
         pane: NavigationPane(displayMode: PaneDisplayMode.compact, items: [
           PaneItem(
@@ -59,12 +60,14 @@ class _HomeState extends State<Home> {
   }
 
   void showNotifications(
-      BuildContext context, int number, Document document) async {
+      BuildContext context, Document document) async {
     await showDialog<String>(
       context: context,
       builder: (context) => ContentDialog(
-        title: Text('Table $number'),
-        content: const Notifications(),
+        title: Text('Table ${document['number']}'),
+        content: Notifications(
+          tableRef: document.reference.path,
+        ),
         actions: [
           Button(
             child: const Text('Cancel'),
@@ -73,16 +76,21 @@ class _HomeState extends State<Home> {
             },
           ),
           FilledButton(
-              child: const Text('Okey'),
-              onPressed: () async {
-                await document.reference.update({'newNotification': false});
-                Navigator.pop(context);
-              }),
+            child: const Text('Okey'),
+            onPressed: () async {
+              await document.reference.update({
+                'newNotification': false,
+                'notifications': [],
+              });
+              Navigator.pop(context);
+            },
+          ),
         ],
       ),
     );
     setState(() {});
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -109,38 +117,57 @@ class _HomeState extends State<Home> {
               shrinkWrap: true,
               children: snapshot.data!.map((document) {
                 //masa listeleme
-                //todo hesap, süre vb özellikler
-                return Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[50]),
-                    borderRadius: const BorderRadius.all(Radius.circular(10)),
-                  ),
-                  child: ListTile(
-                    title: Center(child: Text("Table ${document['number']}")),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        FluentPageRoute(
-                          builder: (context) => TableManagementPage(
-                            tableNo: document['number'],
-                            ordersRef: "/Restaurants/${widget.restaurantID}/Tables/${document['number']}/Orders",
-                          ),
+
+                return Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: document['users'].isEmpty ? Colors.grey[50] : Colors.green,
                         ),
-                      );
-                    },
-                    subtitle: Center(
-                      child: IconButton(
-                        icon: Icon(document['newNotification']
-                            ? FluentIcons.ringer_active
-                            : FluentIcons.ringer),
-                        onPressed: () {
-                          showNotifications(
-                              context, document['number'], document);
-                        },
+                        borderRadius: const BorderRadius.all(Radius.circular(10)),
+                      ),
+                      child: Column(
+                        children: [
+                          ListTile(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                FluentPageRoute(
+                                  builder: (context) => TableManagementPage(
+                                    tableNo: document['number'],
+                                    ordersRef:
+                                    "/Restaurants/${widget.restaurantID}/Tables/${document['number']}/Orders",
+                                  ),
+                                ),
+                              );
+                            },
+                            title: Text(
+                              "Table ${document['number']}",
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                            subtitle: const SizedBox(
+                              height: 70,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(document['newNotification']
+                                ? FluentIcons.ringer_active
+                                : FluentIcons.ringer, size: 24,),
+                            onPressed: () {
+                              showNotifications(
+                                context,
+                                document,
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+
+                  ],
                 );
+
               }).toList(),
             );
           }
@@ -151,11 +178,59 @@ class _HomeState extends State<Home> {
 }
 
 class Notifications extends StatelessWidget {
-  const Notifications({Key? key}) : super(key: key);
+  const Notifications({Key? key, required this.tableRef}) : super(key: key);
+
+  final String tableRef;
 
   @override
   Widget build(BuildContext context) {
-    return const Text(
-        "new order, garson çağırma, hesap isteme, login isteği vb. bildirimler");
+    return StreamBuilder(
+      stream: Firestore.instance.document(tableRef).get().asStream(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: ProgressRing());
+        }
+        final data = snapshot.data!;
+        final notifications = data['notifications'] as List<dynamic>;
+        if (notifications.isEmpty) {
+          return const Text("No notifications");
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Notifications:"),
+            const SizedBox(height: 8),
+            for (final notification in notifications) ...[
+              Text("- $notification"),
+              const SizedBox(height: 4),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class RestaurantNameText extends StatelessWidget {
+  const RestaurantNameText({Key? key, required this.restaurantId})
+      : super(key: key);
+  final String restaurantId;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: Firestore.instance
+          .collection('Restaurants')
+          .document(restaurantId)
+          .get(),
+      builder: (BuildContext context, restaurantSnapshot) {
+        if (restaurantSnapshot.hasError ||
+            restaurantSnapshot.connectionState == ConnectionState.waiting) {
+          return const Text("Loading...");
+        }
+        final restaurantName = restaurantSnapshot.data!['name'] as String;
+        return Text(restaurantName, style: const TextStyle(fontSize: 24),);
+      },
+    );
   }
 }
