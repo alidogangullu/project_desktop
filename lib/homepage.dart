@@ -118,38 +118,19 @@ class _HomeState extends State<Home> {
               children: snapshot.data!.map((document) {
                 //masa listeleme
 
-                return Column(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: document['users'].isEmpty ? Colors.grey[50] : Colors.green,
-                        ),
-                        borderRadius: const BorderRadius.all(Radius.circular(10)),
-                      ),
-                      child: Column(
+                return Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: document['users'].isEmpty ? Colors.grey[50] : Colors.green,
+                    ),
+                    borderRadius: const BorderRadius.all(Radius.circular(10)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          ListTile(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                FluentPageRoute(
-                                  builder: (context) => TableManagementPage(
-                                    tableNo: document['number'],
-                                    ordersRef:
-                                    "/Restaurants/${widget.restaurantID}/Tables/${document['number']}/Orders",
-                                  ),
-                                ),
-                              );
-                            },
-                            title: Text(
-                              "Table ${document['number']}",
-                              style: const TextStyle(fontSize: 20),
-                            ),
-                            subtitle: const SizedBox(
-                              height: 70,
-                            ),
-                          ),
                           IconButton(
                             icon: Icon(document['newNotification']
                                 ? FluentIcons.ringer_active
@@ -163,9 +144,28 @@ class _HomeState extends State<Home> {
                           ),
                         ],
                       ),
-                    ),
-
-                  ],
+                      Expanded(
+                        child: ListTile(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              FluentPageRoute(
+                                builder: (context) => TableManagementPage(
+                                  tableNo: document['number'],
+                                  ordersRef:
+                                  "/Restaurants/${widget.restaurantID}/Tables/${document['number']}/Orders",
+                                ),
+                              ),
+                            );
+                          },
+                          title: Text(
+                            "Table ${document['number']}",
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
 
               }).toList(),
@@ -188,23 +188,25 @@ class Notifications extends StatelessWidget {
       stream: Firestore.instance.document(tableRef).get().asStream(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(child: ProgressRing());
+          return const SizedBox(height: 50,child: Center(child: ProgressRing()));
         }
         final data = snapshot.data!;
         final notifications = data['notifications'] as List<dynamic>;
         if (notifications.isEmpty) {
           return const Text("No notifications");
         }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Notifications:"),
-            const SizedBox(height: 8),
-            for (final notification in notifications) ...[
-              Text("- $notification"),
-              const SizedBox(height: 4),
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Notifications:", style: TextStyle(fontSize: 20),),
+              const SizedBox(height: 8),
+              for (final notification in notifications) ...[
+                Text("- $notification", style: const TextStyle(fontSize: 18),),
+                const SizedBox(height: 4),
+              ],
             ],
-          ],
+          ),
         );
       },
     );
