@@ -76,7 +76,7 @@ class _HomeState extends State<Home> {
             },
           ),
           FilledButton(
-            child: const Text('Okey'),
+            child: const Text('Mark as read'),
             onPressed: () async {
               await document.reference.update({
                 'newNotification': false,
