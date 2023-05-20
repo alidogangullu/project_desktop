@@ -448,6 +448,8 @@ class _TablePageState extends State<TablePage> {
                                                 document.reference.update({
                                                   'quantity_Submitted_notServiced':
                                                       newQuantitySubmittedNotServiced,
+                                                  if (newQuantitySubmittedNotServiced==0)
+                                                    'orderedTime': 0,
                                                 });
                                               }
                                             },
@@ -456,19 +458,39 @@ class _TablePageState extends State<TablePage> {
                                             height: 4,
                                           ),
                                           FilledButton(
-                                            onPressed: () {
+                                            onPressed: () async {
                                               final newQuantityServiced =
                                                   quantityServiced +
                                                       quantitySubmittedNotServiced;
                                               const newQuantitySubmittedNotServiced =
                                                   0;
 
-                                              document.reference.update({
-                                                'quantity_Submitted_notServiced':
-                                                    newQuantitySubmittedNotServiced,
-                                                'quantity_Submitted_Serviced':
-                                                    newQuantityServiced,
+                                              final orderedTime = document['orderedTime'];
+                                              final servicedTime = DateTime.now();
+
+                                              final difference = servicedTime.difference(orderedTime);
+                                              final calculatedTime = difference.inSeconds ~/ quantitySubmittedNotServiced;
+
+                                              var itemDoc = await itemRef.get();
+                                              final orderCount = await itemDoc["orderCount"];
+                                              final estimatedTime = await itemDoc["estimatedTime"];
+
+                                              final totalTime = estimatedTime*orderCount;
+                                              final newEstimatedTime = (totalTime+calculatedTime)/(orderCount+quantitySubmittedNotServiced);
+
+                                              await itemRef.update({
+                                                "orderCount": orderCount+quantitySubmittedNotServiced,
+                                                "estimatedTime": newEstimatedTime,
                                               });
+
+                                              await document.reference.update({
+                                                'quantity_Submitted_notServiced':
+                                                newQuantitySubmittedNotServiced,
+                                                'quantity_Submitted_Serviced':
+                                                newQuantityServiced,
+                                                'orderedTime': 0,
+                                              });
+
                                             },
                                             child:
                                                 const Text('Set as Serviced'),
@@ -727,7 +749,7 @@ class _ItemsGridState extends State<ItemsGrid> {
                     aspectRatio: 1.3,
                     child: Image.network(
                       document["image_url"],
-                      fit: BoxFit.fitWidth,
+                      fit: BoxFit.cover,
                     ),
                   ),
                   Padding(
@@ -754,6 +776,16 @@ class _ItemsGridState extends State<ItemsGrid> {
                           FilledButton(
                             child: const Text("Add to Orders"),
                             onPressed: () async {
+
+                              var table = await Firestore.instance.document("Restaurants/${widget.id}/Tables/${widget.tableNo}").get();
+                              List users =  List.from(table['users']);
+                              if(users.isEmpty){
+                                users.add("waiter");
+                                Firestore.instance.document("Restaurants/${widget.id}/Tables/${widget.tableNo}").update({
+                                  "users" : users,
+                                });
+                              }
+
                               final querySnapshot = await Firestore.instance
                                   .collection("Restaurants/${widget.id}/Tables")
                                   .document(widget.tableNo)
@@ -764,11 +796,13 @@ class _ItemsGridState extends State<ItemsGrid> {
                               if (querySnapshot.isNotEmpty) {
                                 // Item already exists in order, update its quantity
                                 final orderDoc = querySnapshot.first;
+                                final oldQuantity = orderDoc["quantity_Submitted_notServiced"];
                                 final quantity =
-                                    orderDoc["quantity_Submitted_notServiced"] +
+                                    oldQuantity +
                                         1;
                                 orderDoc.reference.update({
-                                  "quantity_Submitted_notServiced": quantity
+                                  "quantity_Submitted_notServiced": quantity,
+                                  if(oldQuantity==0) "orderedTime": DateTime.now(),
                                 });
                               } else {
                                 // Item doesn't exist in order, add it with quantity 1
@@ -783,6 +817,7 @@ class _ItemsGridState extends State<ItemsGrid> {
                                   "quantity_notSubmitted_notServiced": 0,
                                   "quantity_Submitted_notServiced": 1,
                                   "quantity_Submitted_Serviced": 0,
+                                  "orderedTime": DateTime.now(),
                                 });
                               }
                             },
