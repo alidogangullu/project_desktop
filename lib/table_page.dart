@@ -3,7 +3,7 @@ import 'package:firedart/firedart.dart';
 import 'package:intl/intl.dart';
 import 'package:esc_pos_printer/esc_pos_printer.dart';
 import 'package:esc_pos_utils/esc_pos_utils.dart';
-
+import 'package:project_desktop/homepage.dart';
 
 class TableManagementPage extends StatefulWidget {
   const TableManagementPage(
@@ -79,7 +79,6 @@ class _PaymentPageState extends State<PaymentPage> {
   double totalAmount = 0.0;
   DateTime receiptTime = DateTime.now();
 
-
   @override
   void initState() {
     super.initState();
@@ -104,9 +103,8 @@ class _PaymentPageState extends State<PaymentPage> {
       final documents = querySnapshot;
       final filteredDocuments = documents.where((document) {
         final quantitySubmittedNotServiced =
-        document['quantity_Submitted_notServiced'] as int;
-        final quantityServiced =
-        document['quantity_Submitted_Serviced'] as int;
+            document['quantity_Submitted_notServiced'] as int;
+        final quantityServiced = document['quantity_Submitted_Serviced'] as int;
         return quantitySubmittedNotServiced != 0 || quantityServiced != 0;
       }).toList();
 
@@ -114,7 +112,7 @@ class _PaymentPageState extends State<PaymentPage> {
         if (!mounted) return;
         final itemRef = document['itemRef'] as DocumentReference;
         final quantitySubmittedNotServiced =
-        document['quantity_Submitted_notServiced'] as int;
+            document['quantity_Submitted_notServiced'] as int;
         final quantityServiced = document['quantity_Submitted_Serviced'] as int;
         final totalQuantity = quantityServiced + quantitySubmittedNotServiced;
 
@@ -132,10 +130,10 @@ class _PaymentPageState extends State<PaymentPage> {
 
   Future<void> receiptDesign(NetworkPrinter printer) async {
     //todo get these variables from firestore
-    final String restaurantName = 'test';
-    final String addressLine1 = 'test';
-    final String addressLine2 = 'test';
-    final List orderList = [];
+    String restaurantName = 'test';
+    String addressLine1 = 'test';
+    String addressLine2 = 'test';
+    List orderList = [];
 
     // Print image
     //final ByteData data = await rootBundle.load('assets/rabbit_black.jpg');
@@ -152,12 +150,11 @@ class _PaymentPageState extends State<PaymentPage> {
         linesAfter: 1);
 
     printer.text(addressLine1, styles: const PosStyles(align: PosAlign.center));
-    printer.text(addressLine2,
-        styles: const PosStyles(align: PosAlign.center));
+    printer.text(addressLine2, styles: const PosStyles(align: PosAlign.center));
     //printer.text('Tel: 830-221-1234',
-        //styles: PosStyles(align: PosAlign.center));
+    //styles: PosStyles(align: PosAlign.center));
     //printer.text('Web: www.example.com',
-        //styles: PosStyles(align: PosAlign.center), linesAfter: 1);
+    //styles: PosStyles(align: PosAlign.center), linesAfter: 1);
 
     printer.hr();
 
@@ -165,9 +162,13 @@ class _PaymentPageState extends State<PaymentPage> {
       PosColumn(text: 'Qty', width: 1),
       PosColumn(text: 'Item', width: 7),
       PosColumn(
-          text: 'Price', width: 2, styles: const PosStyles(align: PosAlign.right)),
+          text: 'Price',
+          width: 2,
+          styles: const PosStyles(align: PosAlign.right)),
       PosColumn(
-          text: 'Total', width: 2, styles: const PosStyles(align: PosAlign.right)),
+          text: 'Total',
+          width: 2,
+          styles: const PosStyles(align: PosAlign.right)),
     ]);
 
     orderList.forEach((element) {
@@ -175,9 +176,13 @@ class _PaymentPageState extends State<PaymentPage> {
         PosColumn(text: '2', width: 1),
         PosColumn(text: 'ONION RINGS', width: 7),
         PosColumn(
-            text: '0.99', width: 2, styles: const PosStyles(align: PosAlign.right)),
+            text: '0.99',
+            width: 2,
+            styles: const PosStyles(align: PosAlign.right)),
         PosColumn(
-            text: '1.98', width: 2, styles: const PosStyles(align: PosAlign.right)),
+            text: '1.98',
+            width: 2,
+            styles: const PosStyles(align: PosAlign.right)),
       ]);
     });
 
@@ -205,13 +210,12 @@ class _PaymentPageState extends State<PaymentPage> {
 
     printer.feed(2);
     printer.text('Thank you!',
-        styles: PosStyles(align: PosAlign.center, bold: true));
-
+        styles: const PosStyles(align: PosAlign.center, bold: true));
 
     final formatter = DateFormat('MM/dd/yyyy H:m');
     final String timestamp = formatter.format(receiptTime);
     printer.text(timestamp,
-        styles: PosStyles(align: PosAlign.center), linesAfter: 2);
+        styles: const PosStyles(align: PosAlign.center), linesAfter: 2);
 
     printer.feed(1);
     printer.cut();
@@ -245,8 +249,7 @@ class _PaymentPageState extends State<PaymentPage> {
                           ),
                         ),
                         Text(
-                          DateFormat('MMM d, yyyy h:mm a').format(
-                              receiptTime),
+                          DateFormat('MMM d, yyyy h:mm a').format(receiptTime),
                           style: const TextStyle(
                             fontSize: 18,
                             color: Colors.grey,
@@ -267,7 +270,7 @@ class _PaymentPageState extends State<PaymentPage> {
                           return Text('Error: ${snapshot.error}');
                         }
                         if (snapshot.connectionState ==
-                            ConnectionState.waiting &&
+                                ConnectionState.waiting &&
                             isFirstLoading) {
                           isFirstLoading = false;
                           return const Center(child: ProgressRing());
@@ -275,9 +278,9 @@ class _PaymentPageState extends State<PaymentPage> {
                         final documents = snapshot.data!;
                         final filteredDocuments = documents.where((document) {
                           final quantitySubmittedNotServiced =
-                          document['quantity_Submitted_notServiced'] as int;
+                              document['quantity_Submitted_notServiced'] as int;
                           final quantityServiced =
-                          document['quantity_Submitted_Serviced'] as int;
+                              document['quantity_Submitted_Serviced'] as int;
                           return quantitySubmittedNotServiced != 0 ||
                               quantityServiced != 0;
                         }).toList();
@@ -291,13 +294,13 @@ class _PaymentPageState extends State<PaymentPage> {
                             itemBuilder: (BuildContext context, int index) {
                               final document = filteredDocuments[index];
                               final itemRef =
-                              document['itemRef'] as DocumentReference;
+                                  document['itemRef'] as DocumentReference;
                               final quantitySubmittedNotServiced =
-                              document['quantity_Submitted_notServiced']
-                              as int;
+                                  document['quantity_Submitted_notServiced']
+                                      as int;
                               final quantityServiced =
-                              document['quantity_Submitted_Serviced']
-                              as int;
+                                  document['quantity_Submitted_Serviced']
+                                      as int;
                               final totalQuantity = quantityServiced +
                                   quantitySubmittedNotServiced;
                               return FutureBuilder(
@@ -310,7 +313,7 @@ class _PaymentPageState extends State<PaymentPage> {
                                   }
 
                                   final itemName =
-                                  itemSnapshot.data!['name'] as String;
+                                      itemSnapshot.data!['name'] as String;
                                   final itemPrice = itemSnapshot.data!['price'];
                                   final itemTotalPrice =
                                       totalQuantity * itemPrice;
@@ -319,12 +322,11 @@ class _PaymentPageState extends State<PaymentPage> {
                                     padding: const EdgeInsets.all(8),
                                     child: Row(
                                       mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text('$itemName (${totalQuantity}x)'),
                                         Text(
-                                          '\$${itemTotalPrice.toStringAsFixed(
-                                              2)}',
+                                          '\$${itemTotalPrice.toStringAsFixed(2)}',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -384,8 +386,98 @@ class _PaymentPageState extends State<PaymentPage> {
                 const SizedBox(height: 16),
                 const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: () {
-                    // handle collecting payment in cash
+                  onPressed: () async {
+                    final usersRef = Firestore.instance.collection('users');
+                    final String restaurantID = widget.ordersRef.split('/')[2];
+                    final tableRef = Firestore.instance
+                        .collection("Restaurants/$restaurantID/Tables")
+                        .document(widget.tableNo.toString());
+
+                    // Get the list of user IDs from the table.
+                    final tableSnapshot = await tableRef.get();
+                    final userIds = List<String>.from(tableSnapshot['users']);
+
+                    for (final userID in userIds) {
+                      // Get a reference to the orders collection for this table.
+                      final tableOrdersRef = tableRef.collection('Orders');
+                      final restaurantRef = Firestore.instance
+                          .collection("Restaurants")
+                          .document(restaurantID);
+
+                      // Loop through the orders for this table and transfer them to the user's orders collection.
+                      final tableOrdersSnapshot = await tableOrdersRef.get();
+
+                      String completedOrderId = 'waiterApp-${DateTime.now()}';
+
+                      //split "-" because of -admin
+                      String userId = userID.split("-").first;
+
+                      if (!userId.contains("web") &&
+                          !userId.contains("waiter")) {
+                        //registered userid add to completed orders then delete order
+                        await usersRef
+                            .document(userId)
+                            .collection('completedOrders')
+                            .document(completedOrderId)
+                            .set({
+                          'restaurantRef': restaurantRef,
+                          'timestamp': DateTime.now(),
+                          'items': [],
+                          'totalPrice': totalAmount,
+                        });
+
+                        for (final orderSnapshot in tableOrdersSnapshot) {
+                          final orderData = orderSnapshot.map;
+                          final submittedServiced =
+                              orderData['quantity_Submitted_Serviced'] as int;
+                          final submittedNotServiced =
+                              orderData['quantity_Submitted_notServiced']
+                                  as int;
+                          if (submittedServiced > 0 ||
+                              submittedNotServiced > 0) {
+                            final document = await usersRef
+                                .document(userId)
+                                .collection('completedOrders')
+                                .document(completedOrderId)
+                                .get();
+                            List<dynamic> items =
+                                List.from(document['items'] ?? []);
+
+                            items.add(orderData);
+
+                            await usersRef
+                                .document(userId)
+                                .collection('completedOrders')
+                                .document(completedOrderId)
+                                .update({'items': items});
+                          }
+                          await tableOrdersRef
+                              .document(orderSnapshot.id)
+                              .delete(); // Delete from table orders
+                        }
+                      } else {
+                        //unregistered userid just delete order
+                        for (final orderSnapshot in tableOrdersSnapshot) {
+                          await tableOrdersRef
+                              .document(orderSnapshot.id)
+                              .delete(); // Delete from table orders
+                        }
+                      }
+
+                      //reset table users after transferring order data
+                      await tableRef.update({
+                        'users': [],
+                        'newNotification': false,
+                        'notifications': [],
+                      });
+
+                      Navigator.pushReplacement(
+                        context,
+                        FluentPageRoute(
+                            builder: (context) =>
+                                Navigation(restaurantId: restaurantID)),
+                      );
+                    }
                   },
                   child: const Text('Payment Completed & Reset Table'),
                 ),
@@ -396,7 +488,8 @@ class _PaymentPageState extends State<PaymentPage> {
                     final profile = await CapabilityProfile.load();
                     final printer = NetworkPrinter(paper, profile);
 
-                    final PosPrintResult res = await printer.connect('192.168.0.123', port: 9100);
+                    final PosPrintResult res =
+                        await printer.connect('192.168.0.123', port: 9100);
 
                     if (res == PosPrintResult.success) {
                       receiptDesign(printer);
@@ -415,9 +508,7 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 }
 
-
-
-    class TablePage extends StatefulWidget {
+class TablePage extends StatefulWidget {
   const TablePage({Key? key, required this.tableNo, required this.ordersRef})
       : super(key: key);
   final int tableNo;
@@ -544,7 +635,8 @@ class _TablePageState extends State<TablePage> {
                                                 document.reference.update({
                                                   'quantity_Submitted_notServiced':
                                                       newQuantitySubmittedNotServiced,
-                                                  if (newQuantitySubmittedNotServiced==0)
+                                                  if (newQuantitySubmittedNotServiced ==
+                                                      0)
                                                     'orderedTime': 0,
                                                 });
                                               }
@@ -561,32 +653,45 @@ class _TablePageState extends State<TablePage> {
                                               const newQuantitySubmittedNotServiced =
                                                   0;
 
-                                              final orderedTime = document['orderedTime'];
-                                              final servicedTime = DateTime.now();
+                                              final orderedTime =
+                                                  document['orderedTime'];
+                                              final servicedTime =
+                                                  DateTime.now();
 
-                                              final difference = servicedTime.difference(orderedTime);
-                                              final calculatedTime = difference.inSeconds ~/ quantitySubmittedNotServiced;
+                                              final difference = servicedTime
+                                                  .difference(orderedTime);
+                                              final calculatedTime = difference
+                                                      .inSeconds ~/
+                                                  quantitySubmittedNotServiced;
 
                                               var itemDoc = await itemRef.get();
-                                              final orderCount = await itemDoc["orderCount"];
-                                              final estimatedTime = await itemDoc["estimatedTime"];
+                                              final orderCount =
+                                                  await itemDoc["orderCount"];
+                                              final estimatedTime =
+                                                  await itemDoc[
+                                                      "estimatedTime"];
 
-                                              final totalTime = estimatedTime*orderCount;
-                                              final newEstimatedTime = (totalTime+calculatedTime)/(orderCount+quantitySubmittedNotServiced);
+                                              final totalTime =
+                                                  estimatedTime * orderCount;
+                                              final newEstimatedTime = (totalTime +
+                                                      calculatedTime) /
+                                                  (orderCount +
+                                                      quantitySubmittedNotServiced);
 
                                               await itemRef.update({
-                                                "orderCount": orderCount+quantitySubmittedNotServiced,
-                                                "estimatedTime": newEstimatedTime,
+                                                "orderCount": orderCount +
+                                                    quantitySubmittedNotServiced,
+                                                "estimatedTime":
+                                                    newEstimatedTime,
                                               });
 
                                               await document.reference.update({
                                                 'quantity_Submitted_notServiced':
-                                                newQuantitySubmittedNotServiced,
+                                                    newQuantitySubmittedNotServiced,
                                                 'quantity_Submitted_Serviced':
-                                                newQuantityServiced,
+                                                    newQuantityServiced,
                                                 'orderedTime': 0,
                                               });
-
                                             },
                                             child:
                                                 const Text('Set as Serviced'),
@@ -824,10 +929,10 @@ class ItemsGrid extends StatefulWidget {
   });
 
   @override
-  _ItemsGridState createState() => _ItemsGridState();
+  ItemsGridState createState() => ItemsGridState();
 }
 
-class _ItemsGridState extends State<ItemsGrid> {
+class ItemsGridState extends State<ItemsGrid> {
   @override
   Widget build(BuildContext context) {
     return GridView.count(
@@ -872,13 +977,18 @@ class _ItemsGridState extends State<ItemsGrid> {
                           FilledButton(
                             child: const Text("Add to Orders"),
                             onPressed: () async {
-
-                              var table = await Firestore.instance.document("Restaurants/${widget.id}/Tables/${widget.tableNo}").get();
-                              List users =  List.from(table['users']);
-                              if(users.isEmpty){
+                              var table = await Firestore.instance
+                                  .document(
+                                      "Restaurants/${widget.id}/Tables/${widget.tableNo}")
+                                  .get();
+                              List users = List.from(table['users']);
+                              if (users.isEmpty) {
                                 users.add("waiter");
-                                Firestore.instance.document("Restaurants/${widget.id}/Tables/${widget.tableNo}").update({
-                                  "users" : users,
+                                Firestore.instance
+                                    .document(
+                                        "Restaurants/${widget.id}/Tables/${widget.tableNo}")
+                                    .update({
+                                  "users": users,
                                 });
                               }
 
@@ -892,13 +1002,13 @@ class _ItemsGridState extends State<ItemsGrid> {
                               if (querySnapshot.isNotEmpty) {
                                 // Item already exists in order, update its quantity
                                 final orderDoc = querySnapshot.first;
-                                final oldQuantity = orderDoc["quantity_Submitted_notServiced"];
-                                final quantity =
-                                    oldQuantity +
-                                        1;
+                                final oldQuantity =
+                                    orderDoc["quantity_Submitted_notServiced"];
+                                final quantity = oldQuantity + 1;
                                 orderDoc.reference.update({
                                   "quantity_Submitted_notServiced": quantity,
-                                  if(oldQuantity==0) "orderedTime": DateTime.now(),
+                                  if (oldQuantity == 0)
+                                    "orderedTime": DateTime.now(),
                                 });
                               } else {
                                 // Item doesn't exist in order, add it with quantity 1
