@@ -1,6 +1,9 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:firedart/firedart.dart';
 import 'package:intl/intl.dart';
+import 'package:esc_pos_printer/esc_pos_printer.dart';
+import 'package:esc_pos_utils/esc_pos_utils.dart';
+
 
 class TableManagementPage extends StatefulWidget {
   const TableManagementPage(
@@ -74,6 +77,15 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   bool isFirstLoading = true;
   double totalAmount = 0.0;
+  DateTime receiptTime = DateTime.now();
+
+
+  @override
+  void initState() {
+    super.initState();
+    calculateTotalAmount();
+    listenRestaurantData();
+  }
 
   void listenRestaurantData() {
     final ref = Firestore.instance.collection(widget.ordersRef);
@@ -81,13 +93,6 @@ class _PaymentPageState extends State<PaymentPage> {
     ref.stream.listen((document) {
       setState(() {});
     });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    calculateTotalAmount();
-    listenRestaurantData();
   }
 
   void calculateTotalAmount() {
@@ -125,6 +130,93 @@ class _PaymentPageState extends State<PaymentPage> {
     });
   }
 
+  Future<void> receiptDesign(NetworkPrinter printer) async {
+    //todo get these variables from firestore
+    final String restaurantName = 'test';
+    final String addressLine1 = 'test';
+    final String addressLine2 = 'test';
+    final List orderList = [];
+
+    // Print image
+    //final ByteData data = await rootBundle.load('assets/rabbit_black.jpg');
+    //final Uint8List bytes = data.buffer.asUint8List();
+    //final Image image = decodeImage(bytes);
+    //printer.image(image);
+
+    printer.text(restaurantName,
+        styles: const PosStyles(
+          align: PosAlign.center,
+          height: PosTextSize.size2,
+          width: PosTextSize.size2,
+        ),
+        linesAfter: 1);
+
+    printer.text(addressLine1, styles: const PosStyles(align: PosAlign.center));
+    printer.text(addressLine2,
+        styles: const PosStyles(align: PosAlign.center));
+    //printer.text('Tel: 830-221-1234',
+        //styles: PosStyles(align: PosAlign.center));
+    //printer.text('Web: www.example.com',
+        //styles: PosStyles(align: PosAlign.center), linesAfter: 1);
+
+    printer.hr();
+
+    printer.row([
+      PosColumn(text: 'Qty', width: 1),
+      PosColumn(text: 'Item', width: 7),
+      PosColumn(
+          text: 'Price', width: 2, styles: const PosStyles(align: PosAlign.right)),
+      PosColumn(
+          text: 'Total', width: 2, styles: const PosStyles(align: PosAlign.right)),
+    ]);
+
+    orderList.forEach((element) {
+      printer.row([
+        PosColumn(text: '2', width: 1),
+        PosColumn(text: 'ONION RINGS', width: 7),
+        PosColumn(
+            text: '0.99', width: 2, styles: const PosStyles(align: PosAlign.right)),
+        PosColumn(
+            text: '1.98', width: 2, styles: const PosStyles(align: PosAlign.right)),
+      ]);
+    });
+
+    printer.hr();
+
+    printer.row([
+      PosColumn(
+          text: 'TOTAL',
+          width: 6,
+          styles: const PosStyles(
+            height: PosTextSize.size2,
+            width: PosTextSize.size2,
+          )),
+      PosColumn(
+          text: totalAmount.toStringAsFixed(2),
+          width: 6,
+          styles: const PosStyles(
+            align: PosAlign.right,
+            height: PosTextSize.size2,
+            width: PosTextSize.size2,
+          )),
+    ]);
+
+    printer.hr(ch: '=', linesAfter: 1);
+
+    printer.feed(2);
+    printer.text('Thank you!',
+        styles: PosStyles(align: PosAlign.center, bold: true));
+
+
+    final formatter = DateFormat('MM/dd/yyyy H:m');
+    final String timestamp = formatter.format(receiptTime);
+    printer.text(timestamp,
+        styles: PosStyles(align: PosAlign.center), linesAfter: 2);
+
+    printer.feed(1);
+    printer.cut();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -154,7 +246,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         ),
                         Text(
                           DateFormat('MMM d, yyyy h:mm a').format(
-                              DateTime.now()),
+                              receiptTime),
                           style: const TextStyle(
                             fontSize: 18,
                             color: Colors.grey,
@@ -290,23 +382,27 @@ class _PaymentPageState extends State<PaymentPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () {
-                    // handle collecting payment by card
-                  },
-                  child: const Text('Collect Payment by Card'),
-                ),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () {
                     // handle collecting payment in cash
                   },
-                  child: const Text('Collect Payment in Cash'),
+                  child: const Text('Payment Completed & Reset Table'),
                 ),
                 const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: () {
-                    // handle printing receipt
+                  onPressed: () async {
+                    const PaperSize paper = PaperSize.mm80;
+                    final profile = await CapabilityProfile.load();
+                    final printer = NetworkPrinter(paper, profile);
+
+                    final PosPrintResult res = await printer.connect('192.168.0.123', port: 9100);
+
+                    if (res == PosPrintResult.success) {
+                      receiptDesign(printer);
+                      printer.disconnect();
+                    }
+                    print('Print result: ${res.msg}');
                   },
                   child: const Text('Print Receipt'),
                 ),
