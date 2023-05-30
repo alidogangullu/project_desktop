@@ -471,6 +471,31 @@ class _PaymentPageState extends State<PaymentPage> {
                         'notifications': [],
                       });
 
+                      // Get the current date for stats
+                      final currentDate = DateTime.now();
+                      final currentDay = currentDate.day.toString().padLeft(2, '0');
+                      final currentMonth = currentDate.month.toString().padLeft(2, '0');
+                      final currentYear = currentDate.year.toString();
+
+                      // Get the current document.
+                      final restDoc = await restaurantRef.get();
+                      Map<String, dynamic> totalSales = restDoc['totalSales'] ?? {};
+                      Map<String, dynamic> yearData = totalSales[currentYear] ?? {};
+                      Map<String, dynamic> monthData = yearData[currentMonth] ?? {};
+
+                      double daySales = monthData[currentDay] ?? 0.0;
+                      daySales += totalAmount;
+
+                      // Put the new day sales back into the data.
+                      monthData[currentDay] = daySales;
+                      yearData[currentMonth] = monthData;
+                      totalSales[currentYear] = yearData;
+
+                      // Update the total sales
+                      await restaurantRef.update({
+                        'totalSales': totalSales,
+                      });
+
                       Navigator.pushReplacement(
                         context,
                         FluentPageRoute(
