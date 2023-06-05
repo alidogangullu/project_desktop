@@ -42,13 +42,14 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   bool isFirstLoading = true;
+  var stream;
 
   void listenRestaurantData() {
     final ref = Firestore.instance
         .collection("/Restaurants/${widget.restaurantID}/Tables");
 
     //databasede değişiklik olduğunda ekranı güncellemek için
-    ref.stream.listen((document) {
+    stream = ref.stream.listen((document) {
       setState(() {});
     });
   }
@@ -57,6 +58,12 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     listenRestaurantData();
+  }
+
+  @override
+  void dispose() {
+    stream.cancel;
+    super.dispose();
   }
 
   void showNotifications(
@@ -117,11 +124,20 @@ class _HomeState extends State<Home> {
               shrinkWrap: true,
               children: snapshot.data!.map((document) {
                 //masa listeleme
+                Color getBorderColor() {
+                  if (!document['users'].isEmpty) {
+                    return Colors.green;
+                  } else if (!document['unAuthorizedUsers'].isEmpty){
+                    return Colors.red;
+                  } else {
+                    return Colors.grey[50];
+                  }
+                }
 
                 return Container(
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: document['users'].isEmpty ? Colors.grey[50] : Colors.green,
+                      color: getBorderColor(),
                     ),
                     borderRadius: const BorderRadius.all(Radius.circular(10)),
                   ),
@@ -131,6 +147,21 @@ class _HomeState extends State<Home> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
+                          if(!document['unAuthorizedUsers'].isEmpty && document['users'].isEmpty)
+                          IconButton(
+                            icon: const Icon(FluentIcons.accept, size: 24),
+                            onPressed: () async {
+                              final unAuthUserIds = List<String>.from(document['unAuthorizedUsers']);
+                              final users = List<String>.from(document['users']);
+                              users.add("${unAuthUserIds.first}-admin");
+                              unAuthUserIds.removeAt(0);
+                              await document.reference
+                                  .update({
+                                'users': users,
+                                'unAuthorizedUsers': unAuthUserIds,
+                                  });
+                            },
+                          ),
                           IconButton(
                             icon: Icon(document['newNotification']
                                 ? FluentIcons.ringer_active

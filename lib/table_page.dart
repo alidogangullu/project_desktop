@@ -467,6 +467,7 @@ class _PaymentPageState extends State<PaymentPage> {
                       //reset table users after transferring order data
                       await tableRef.update({
                         'users': [],
+                        'unAuthorizedUsers': [],
                         'newNotification': false,
                         'notifications': [],
                       });
