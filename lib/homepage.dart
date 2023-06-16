@@ -265,65 +265,76 @@ class SubmittedNotServicedOrdersState
     extends State<SubmittedNotServicedOrders> {
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: Firestore.instance
-          .collection("/Restaurants/${widget.restaurantID}/Tables")
-          .get().asStream(),
-      builder: (context, tableSnapshot) {
-        if (!tableSnapshot.hasData) {
-          return const Center(child: ProgressRing());
-        }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(16),
+          child: Text("Live Order Feed", style: TextStyle(fontSize: 20),),
+        ),
+        Expanded(
+          child: StreamBuilder(
+            stream: Firestore.instance
+                .collection("/Restaurants/${widget.restaurantID}/Tables")
+                .get().asStream(),
+            builder: (context, tableSnapshot) {
+              if (!tableSnapshot.hasData) {
+                return const Center(child: ProgressRing());
+              }
 
-        return ListView.builder(
-          itemCount: tableSnapshot.data!.length,
-          itemBuilder: (context, index) {
-            var tableDoc = tableSnapshot.data![index];
+              return ListView.builder(
+                itemCount: tableSnapshot.data!.length,
+                itemBuilder: (context, index) {
+                  var tableDoc = tableSnapshot.data![index];
 
-            return StreamBuilder(
-              stream: tableDoc.reference.collection('Orders')
-                  .get().asStream(),
-              builder: (context, orderSnapshot) {
-                if (!orderSnapshot.hasData) {
-                  return const SizedBox();
-                }
+                  return StreamBuilder(
+                    stream: tableDoc.reference.collection('Orders')
+                        .get().asStream(),
+                    builder: (context, orderSnapshot) {
+                      if (!orderSnapshot.hasData) {
+                        return const SizedBox();
+                      }
 
-                return Column(
-                  children: orderSnapshot.data!.map((orderDoc) {
-                    if (orderDoc['quantity_Submitted_notServiced'] > 0) {
-                      return FutureBuilder(
-                        future: Firestore.instance
-                            .document(orderDoc['itemRef'].toString().split(": ").last)
-                            .get(),
-                        builder: (context, itemSnapshot) {
-                          if (!itemSnapshot.hasData) {
-                            return const SizedBox();
+                      return Column(
+                        children: orderSnapshot.data!.map((orderDoc) {
+                          if (orderDoc['quantity_Submitted_notServiced'] > 0) {
+                            return FutureBuilder(
+                              future: Firestore.instance
+                                  .document(orderDoc['itemRef'].toString().split(": ").last)
+                                  .get(),
+                              builder: (context, itemSnapshot) {
+                                if (!itemSnapshot.hasData) {
+                                  return const SizedBox();
+                                }
+                                DateTime orderedDateTime = orderDoc['orderedTime'];
+                                String formattedOrderedTime = DateFormat.yMd().add_jm().format(orderedDateTime);
+
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Card(
+                                    child: ListTile(
+                                      title: Text(
+                                          'Table ${tableDoc['number']} - ${itemSnapshot.data!['name']}'),
+                                      subtitle: Text(
+                                          'Quantity: ${orderDoc['quantity_Submitted_notServiced']} - Ordered Time: $formattedOrderedTime'),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          } else {
+                            return const SizedBox.shrink();
                           }
-                          DateTime orderedDateTime = orderDoc['orderedTime'];
-                          String formattedOrderedTime = DateFormat.yMd().add_jm().format(orderedDateTime);
-
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Card(
-                              child: ListTile(
-                                title: Text(
-                                    'Table ${tableDoc['number']} - ${itemSnapshot.data!['name']}'),
-                                subtitle: Text(
-                                    'Quantity: ${orderDoc['quantity_Submitted_notServiced']} - Ordered Time: $formattedOrderedTime'),
-                              ),
-                            ),
-                          );
-                        },
+                        }).toList(),
                       );
-                    } else {
-                      return const SizedBox.shrink();
-                    }
-                  }).toList(),
-                );
-              },
-            );
-          },
-        );
-      },
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
