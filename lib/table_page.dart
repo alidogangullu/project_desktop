@@ -598,7 +598,7 @@ class _TablePageState extends State<TablePage> {
                     crossAxisCount: 3,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
-                    childAspectRatio: 0.88,
+                    childAspectRatio: 0.85,
                   ),
                   primary: false,
                   shrinkWrap: true,
@@ -747,7 +747,7 @@ class _TablePageState extends State<TablePage> {
                                   document.reference.delete();
                                 },
                                 child: const Text("Delete All"),
-                              )
+                              ),
                             ],
                           ),
                         );

@@ -1,12 +1,20 @@
 import 'package:firedart/firedart.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:project_desktop/table_page.dart';
+import 'package:intl/intl.dart';
 
-class Navigation extends StatelessWidget {
+
+class Navigation extends StatefulWidget {
   const Navigation({Key? key, required this.restaurantId}) : super(key: key);
 
   final String restaurantId;
 
+  @override
+  State<Navigation> createState() => _NavigationState();
+}
+
+class _NavigationState extends State<Navigation> {
+  int index = 0;
   @override
   Widget build(BuildContext context) {
     return FluentApp(
@@ -14,18 +22,32 @@ class Navigation extends StatelessWidget {
         appBar: NavigationAppBar(
           leading: const SizedBox(),
           title: RestaurantNameText(
-            restaurantId: restaurantId,
+            restaurantId: widget.restaurantId,
           ),
         ),
-        pane: NavigationPane(displayMode: PaneDisplayMode.compact, items: [
+        pane: NavigationPane(
+            selected: index,
+            onChanged: (newIndex){
+              setState(() {
+                index = newIndex;
+              });
+            },
+            displayMode: PaneDisplayMode.compact,
+            items: [
           PaneItem(
             icon: const Icon(FluentIcons.home),
             title: const Text("Home"),
             body: Home(
-              restaurantID: restaurantId,
+              restaurantID: widget.restaurantId,
             ),
           ),
-          //todo yeni sekmeler
+          PaneItem(
+            icon: const Icon(FluentIcons.timer),
+            title: const Text("Orders"),
+            body: SubmittedNotServicedOrders(
+              restaurantID: widget.restaurantId,
+            ),
+          ),
         ]),
       ),
     );
@@ -162,6 +184,27 @@ class _HomeState extends State<Home> {
                                   });
                             },
                           ),
+                          if(!document['unAuthorizedUsers'].isEmpty || !document['users'].isEmpty)
+                            IconButton(
+                              icon: const Icon(FluentIcons.cancel, size: 24),
+                              onPressed: () async {
+                                final tableOrdersRef = document.reference.collection('Orders');
+                                final tableOrdersSnapshot = await tableOrdersRef.get();
+
+                                //reset table
+                                await document.reference.update({
+                                  'users': [],
+                                  'unAuthorizedUsers': [],
+                                  'newNotification': false,
+                                  'notifications': [],
+                                });
+                                for (final orderSnapshot in tableOrdersSnapshot) {
+                                  await tableOrdersRef
+                                      .document(orderSnapshot.id)
+                                      .delete(); // Delete from table orders
+                                }
+                              },
+                            ),
                           IconButton(
                             icon: Icon(document['newNotification']
                                 ? FluentIcons.ringer_active
@@ -204,6 +247,83 @@ class _HomeState extends State<Home> {
           }
         },
       ),
+    );
+  }
+}
+
+class SubmittedNotServicedOrders extends StatefulWidget {
+  final String restaurantID;
+
+  const SubmittedNotServicedOrders({super.key, required this.restaurantID});
+
+  @override
+  SubmittedNotServicedOrdersState createState() =>
+      SubmittedNotServicedOrdersState();
+}
+
+class SubmittedNotServicedOrdersState
+    extends State<SubmittedNotServicedOrders> {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: Firestore.instance
+          .collection("/Restaurants/${widget.restaurantID}/Tables")
+          .get().asStream(),
+      builder: (context, tableSnapshot) {
+        if (!tableSnapshot.hasData) {
+          return const Center(child: ProgressRing());
+        }
+
+        return ListView.builder(
+          itemCount: tableSnapshot.data!.length,
+          itemBuilder: (context, index) {
+            var tableDoc = tableSnapshot.data![index];
+
+            return StreamBuilder(
+              stream: tableDoc.reference.collection('Orders')
+                  .get().asStream(),
+              builder: (context, orderSnapshot) {
+                if (!orderSnapshot.hasData) {
+                  return const SizedBox();
+                }
+
+                return Column(
+                  children: orderSnapshot.data!.map((orderDoc) {
+                    if (orderDoc['quantity_Submitted_notServiced'] > 0) {
+                      return FutureBuilder(
+                        future: Firestore.instance
+                            .document(orderDoc['itemRef'].toString().split(": ").last)
+                            .get(),
+                        builder: (context, itemSnapshot) {
+                          if (!itemSnapshot.hasData) {
+                            return const SizedBox();
+                          }
+                          DateTime orderedDateTime = orderDoc['orderedTime'];
+                          String formattedOrderedTime = DateFormat.yMd().add_jm().format(orderedDateTime);
+
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Card(
+                              child: ListTile(
+                                title: Text(
+                                    'Table ${tableDoc['number']} - ${itemSnapshot.data!['name']}'),
+                                subtitle: Text(
+                                    'Quantity: ${orderDoc['quantity_Submitted_notServiced']} - Ordered Time: $formattedOrderedTime'),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  }).toList(),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
