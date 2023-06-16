@@ -129,11 +129,42 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Future<void> receiptDesign(NetworkPrinter printer) async {
-    //todo get these variables from firestore
-    String restaurantName = 'test';
-    String addressLine1 = 'test';
-    String addressLine2 = 'test';
-    List orderList = [];
+    //get order variables from firestore
+    final String restaurantID = widget.ordersRef.split('/')[2];
+    var ref = Firestore.instance.collection('Restaurants').document(restaurantID);
+    var document = await ref.get();
+
+    String restaurantName = document['name'];
+    String addressLine1 = 'address';
+
+    List<Map<String, dynamic>> orderList = []; // Define an empty list to store the order details
+    var ordersSnapshot = await Firestore.instance.collection(widget.ordersRef).get();
+    var orderDocuments = ordersSnapshot;
+
+    orderDocuments.forEach((orderDoc) async {
+
+      String itemRef = orderDoc['itemRef'];
+      int quantity1 = orderDoc['quantity_Submitted_notServiced'];
+      int quantity2 = orderDoc['quantity_Submitted_Serviced'];
+      int quantity = quantity1 + quantity2;
+
+      var itemSnapshot = await Firestore.instance.document(itemRef).get();
+      double price = itemSnapshot['price'];
+      String name = itemSnapshot['name'];
+
+      double total = price * quantity;
+
+      Map<String, dynamic> orderDetails = {
+        'quantity': quantity.toString(),
+        'item': name,
+        'price': price.toStringAsFixed(2),
+        'total': total.toStringAsFixed(2),
+      };
+
+      // Add the order details to the orderList
+      orderList.add(orderDetails);
+    });
+
 
     // Print image
     //final ByteData data = await rootBundle.load('assets/rabbit_black.jpg');
@@ -150,7 +181,6 @@ class _PaymentPageState extends State<PaymentPage> {
         linesAfter: 1);
 
     printer.text(addressLine1, styles: const PosStyles(align: PosAlign.center));
-    printer.text(addressLine2, styles: const PosStyles(align: PosAlign.center));
     //printer.text('Tel: 830-221-1234',
     //styles: PosStyles(align: PosAlign.center));
     //printer.text('Web: www.example.com',
@@ -158,29 +188,16 @@ class _PaymentPageState extends State<PaymentPage> {
 
     printer.hr();
 
-    printer.row([
-      PosColumn(text: 'Qty', width: 1),
-      PosColumn(text: 'Item', width: 7),
-      PosColumn(
-          text: 'Price',
-          width: 2,
-          styles: const PosStyles(align: PosAlign.right)),
-      PosColumn(
-          text: 'Total',
-          width: 2,
-          styles: const PosStyles(align: PosAlign.right)),
-    ]);
-
-    orderList.forEach((element) {
+    orderList.forEach((order) {
       printer.row([
-        PosColumn(text: '2', width: 1),
-        PosColumn(text: 'ONION RINGS', width: 7),
+        PosColumn(text: order['quantity'], width: 1),
+        PosColumn(text: order['item'], width: 7),
         PosColumn(
-            text: '0.99',
+            text: order['price'],
             width: 2,
             styles: const PosStyles(align: PosAlign.right)),
         PosColumn(
-            text: '1.98',
+            text: order['total'],
             width: 2,
             styles: const PosStyles(align: PosAlign.right)),
       ]);
@@ -188,9 +205,16 @@ class _PaymentPageState extends State<PaymentPage> {
 
     printer.hr();
 
+    double totalAmount = 0.0;
+
+    for (Map<String, dynamic> order in orderList) {
+      double orderTotal = double.parse(order['total']);
+      totalAmount += orderTotal;
+    }
+
     printer.row([
       PosColumn(
-          text: 'TOTAL',
+          text: totalAmount.toStringAsFixed(2),
           width: 6,
           styles: const PosStyles(
             height: PosTextSize.size2,
